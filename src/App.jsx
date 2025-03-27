@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { UploadCloud } from "lucide-react";
+import logo from './assets/logo.png'
 
 export default function App() {
   const [messages, setMessages] = useState([
@@ -15,7 +16,7 @@ export default function App() {
     setMessages((prev) => [...prev, { sender: "user", text: file.name }]);
     setMessages((prev) => [...prev, { sender: "bot", text: "Uploading video...", streaming: true }]);
     setIsProcessing(true);
-    setProgress(10);
+    setProgress(0);
     
     const formData = new FormData();
     formData.append("video", file);
@@ -27,9 +28,20 @@ export default function App() {
       });
       
       if (response.ok) {
-        setMessages((prev) => [...prev, { sender: "bot", text: "Processing video...", streaming: true }]);
-        setProgress(30);
-        streamResults(response);
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        
+        const { value } = await reader.read();
+        const duration = decoder.decode(value).trim(); // First response is duration
+        console.log(duration)
+        // alert(value)
+        if (!isNaN(duration)) {
+          smoothProgress(duration);
+          streamResults(reader, decoder);
+        } else {
+          setMessages((prev) => [...prev, { sender: "bot", text: "Invalid response from server." }]);
+          setIsProcessing(false);
+        }
       } else {
         setMessages((prev) => [...prev, { sender: "bot", text: "Failed to upload video." }]);
         setIsProcessing(false);
@@ -40,11 +52,23 @@ export default function App() {
     }
   };
 
-  const streamResults = async (response) => {
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    setProgress(50);
+  const smoothProgress = (duration) => {
+    const interval = 100; // Update every 100ms
+    const increment = 100 / (duration * (1000 / interval));
+    let progressValue = 0;
     
+    const progressInterval = setInterval(() => {
+      progressValue += increment;
+      if (progressValue >= 100) {
+        clearInterval(progressInterval);
+        setProgress(100);
+      } else {
+        setProgress(progressValue);
+      }
+    }, interval);
+  };
+
+  const streamResults = async (reader, decoder) => {
     let buffer = "";
     while (true) {
       const { value, done } = await reader.read();
@@ -57,7 +81,6 @@ export default function App() {
       for (const line of lines) {
         if (line.trim()) {
           setMessages((prev) => [...prev, { sender: "bot", text: line, streaming: true }]);
-          setProgress((prev) => Math.min(prev + 10, 90));
           await new Promise((resolve) => setTimeout(resolve, 500));
         }
       }
@@ -66,13 +89,12 @@ export default function App() {
       setMessages((prev) => [...prev, { sender: "bot", text: buffer, streaming: true }]);
     }
     setIsProcessing(false);
-    setProgress(100);
   };
 
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className="w-64 bg-gray-900 text-white p-4">ChatGPT Clone</div>
+      <div className="w-64 bg-green-200 text-white p-4"><img src={logo}/></div>
       
       {/* Main Chat Area */}
       <div className="flex flex-col flex-1 p-4">
