@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { UploadCloud } from "lucide-react";
 
 export default function App() {
   const [messages, setMessages] = useState([
@@ -90,7 +91,11 @@ export default function App() {
           </div>
         )}
         
-        <input type="file" accept="video/*" className="mt-2" onChange={handleUpload} />
+        <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer mt-4 bg-white hover:bg-gray-50">
+          <UploadCloud className="w-6 h-6 text-gray-600" />
+          <span className="text-gray-600">Click or Drag to Upload Video</span>
+          <input type="file" accept="video/*" className="hidden" onChange={handleUpload} />
+        </label>
       </div>
     </div>
   );
