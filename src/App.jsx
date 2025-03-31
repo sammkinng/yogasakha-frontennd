@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { UploadCloud } from "lucide-react";
+import { UploadCloud, Menu } from "lucide-react";
 import logo from './assets/logo.png';
 
 export default function App() {
@@ -8,6 +8,7 @@ export default function App() {
   ]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -37,7 +38,7 @@ export default function App() {
         const decoder = new TextDecoder();
         
         const { value } = await reader.read();
-        const duration = decoder.decode(value).trim(); // First response is duration
+        const duration = parseInt(decoder.decode(value).trim(), 10);
         if (!isNaN(duration)) {
           smoothProgress(duration);
           streamResults(reader, decoder);
@@ -59,7 +60,7 @@ export default function App() {
     const interval = 100;
     const increment = 100 / (duration * (1000 / interval));
     let progressValue = 0;
-    
+  
     const progressInterval = setInterval(() => {
       progressValue += increment;
       if (progressValue >= 100) {
@@ -98,18 +99,31 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <div className="w-64 bg-green-200 text-white p-4"><img src={logo} alt="Logo" /></div>
+      <div className="fixed top-0 left-0 w-full bg-green-200 p-4 flex items-center justify-between md:hidden">
+        <img src={logo} alt="Logo" width={80}/>
+        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-white">
+          <Menu className="w-6 h-6" />
+        </button>
+      </div>
       
-      <div className="flex flex-col flex-1 p-4">
-        <div className="flex-1 overflow-y-auto p-4 bg-white shadow rounded-lg" style={{ paddingBottom: '6rem' }}>
+      <div className={`fixed inset-y-0 left-0 w-64 bg-green-200 text-white p-4 transition-transform transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:relative md:flex`} style={{ zIndex: 50 }}>
+        <button onClick={() => setIsSidebarOpen(false)} className="md:hidden absolute top-4 right-4 text-white">✖</button>
+        <div className="h-full">
+        <img src={logo} alt="Logo" className="hidden md:block"   />
+        </div>
+        
+      </div>
+      
+      <div className="flex flex-col flex-1 p-4 mt-30 md:mt-0">
+        <div className="flex-1 overflow-y-auto p-4  bg-white shadow rounded-lg" style={{ paddingBottom: '6rem' }}>
           {messages.map((msg, index) => (
-          msg.sender ? (
+            msg.sender ? (
               <div key={index} className={`mb-2 p-2 rounded-lg ${msg.sender === "bot" ? "bg-blue-100 text-blue-900" : "bg-green-100 text-green-900"}`}>
                 <strong>{msg.sender === "bot" ? "Bot: " : "You: "}</strong>
                 <span className={msg.streaming ? "animate-pulse" : ""}>{msg.text}</span>
               </div>
             ) : (
-              <div key={index} className="mb-8 border-b border-gray-300" ></div>
+              <div key={index} className="mb-8 border-b border-gray-300" />
             )
           ))}
           <div ref={messagesEndRef} />
