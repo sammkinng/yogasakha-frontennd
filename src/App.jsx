@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { UploadCloud } from "lucide-react";
-import logo from './assets/logo.png'
+import logo from './assets/logo.png';
 
 export default function App() {
   const [messages, setMessages] = useState([
@@ -8,6 +8,11 @@ export default function App() {
   ]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const handleUpload = async (event) => {
     const file = event.target.files[0];
@@ -33,8 +38,6 @@ export default function App() {
         
         const { value } = await reader.read();
         const duration = decoder.decode(value).trim(); // First response is duration
-        console.log(duration)
-        // alert(value)
         if (!isNaN(duration)) {
           smoothProgress(duration);
           streamResults(reader, decoder);
@@ -53,7 +56,7 @@ export default function App() {
   };
 
   const smoothProgress = (duration) => {
-    const interval = 100; // Update every 100ms
+    const interval = 100;
     const increment = 100 / (duration * (1000 / interval));
     let progressValue = 0;
     
@@ -93,18 +96,17 @@ export default function App() {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
-      <div className="w-64 bg-green-200 text-white p-4"><img src={logo}/></div>
+      <div className="w-64 bg-green-200 text-white p-4"><img src={logo} alt="Logo" /></div>
       
-      {/* Main Chat Area */}
       <div className="flex flex-col flex-1 p-4">
-        <div className="flex-1 overflow-y-auto p-4 bg-white shadow rounded-lg">
+        <div className="flex-1 overflow-y-auto p-4 bg-white shadow rounded-lg" style={{ paddingBottom: '6rem' }}>
           {messages.map((msg, index) => (
             <div key={index} className={`mb-2 p-2 rounded-lg ${msg.sender === "bot" ? "bg-blue-100 text-blue-900" : "bg-green-100 text-green-900"}`}>
               <strong>{msg.sender === "bot" ? "Bot: " : "You: "}</strong>
               <span className={msg.streaming ? "animate-pulse" : ""}>{msg.text}</span>
             </div>
           ))}
+          <div ref={messagesEndRef} />
         </div>
         
         {isProcessing && (
@@ -113,11 +115,13 @@ export default function App() {
           </div>
         )}
         
-        <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer mt-4 bg-white hover:bg-gray-50">
-          <UploadCloud className="w-6 h-6 text-gray-600" />
-          <span className="text-gray-600">Click or Drag to Upload Video</span>
-          <input type="file" accept="video/*" className="hidden" onChange={handleUpload} />
-        </label>
+        {!isProcessing && (
+          <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-400 rounded-lg cursor-pointer mt-4 bg-white hover:bg-gray-50">
+            <UploadCloud className="w-6 h-6 text-gray-600" />
+            <span className="text-gray-600">Click or Drag to Upload Video</span>
+            <input type="file" accept="video/*" className="hidden" onChange={handleUpload} />
+          </label>
+        )}
       </div>
     </div>
   );
