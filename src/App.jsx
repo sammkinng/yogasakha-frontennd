@@ -84,8 +84,10 @@ export default function App() {
       for (const line of lines) {
         if (line.trim()) {
           setMessages((prev) => [...prev, { sender: "bot", text: line, streaming: true }]);
-          await new Promise((resolve) => setTimeout(resolve, 500));
+        } else {
+          setMessages((prev) => [...prev, "#"]);
         }
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
     }
     if (buffer.trim()) {
@@ -101,10 +103,14 @@ export default function App() {
       <div className="flex flex-col flex-1 p-4">
         <div className="flex-1 overflow-y-auto p-4 bg-white shadow rounded-lg" style={{ paddingBottom: '6rem' }}>
           {messages.map((msg, index) => (
-            <div key={index} className={`mb-2 p-2 rounded-lg ${msg.sender === "bot" ? "bg-blue-100 text-blue-900" : "bg-green-100 text-green-900"}`}>
-              <strong>{msg.sender === "bot" ? "Bot: " : "You: "}</strong>
-              <span className={msg.streaming ? "animate-pulse" : ""}>{msg.text}</span>
-            </div>
+          msg.sender ? (
+              <div key={index} className={`mb-2 p-2 rounded-lg ${msg.sender === "bot" ? "bg-blue-100 text-blue-900" : "bg-green-100 text-green-900"}`}>
+                <strong>{msg.sender === "bot" ? "Bot: " : "You: "}</strong>
+                <span className={msg.streaming ? "animate-pulse" : ""}>{msg.text}</span>
+              </div>
+            ) : (
+              <div key={index} className="mb-8 border-b border-gray-300" ></div>
+            )
           ))}
           <div ref={messagesEndRef} />
         </div>
