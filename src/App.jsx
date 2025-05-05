@@ -30,8 +30,10 @@ export default function App() {
     try {
       const response = await fetch("https://yogasakha.onrender.com/upload", {
         method: "POST",
-        body: formData,
-         mode: "no-cors"
+        headers: {
+          "Content-Type": "multipart/form-data", // Or 'application/json' depending on your API
+        },
+        body: formData
       });
       
       if (response.ok) {
